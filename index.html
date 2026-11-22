@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Easy Fix | Minecraft Downloads</title>
+<style>
+:root{--bg:#080817;--panel:#11152e;--purple:#a855f7;--cyan:#22d3ee;--green:#4ade80;--gold:#facc15}
+*{box-sizing:border-box}body{margin:0;color:#fff;font-family:system-ui,Arial,sans-serif;background:radial-gradient(circle at 50% 0,#34206c 0,#11132c 38%,#070812 78%);min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px clamp(16px,5vw,64px);border-bottom:1px solid #7544d877;background:#080817dd;position:sticky;top:0}
+.brand{font-weight:1000;font-size:clamp(20px,4vw,30px);letter-spacing:1px}.brand span{color:var(--purple)}
+a{color:inherit}.toplink{background:#6828c8;padding:10px 16px;border-radius:12px;text-decoration:none;font-weight:800}
+main{max-width:1100px;margin:auto;padding:42px 18px 70px}
+.hero{text-align:center;padding:20px 0 30px}.eyebrow{color:#d8b4fe;font-weight:900;letter-spacing:3px}
+h1{font-size:clamp(34px,7vw,64px);line-height:1.04;margin:12px 0;text-shadow:0 5px 0 #35116d}
+.sub{color:#d7d5e8;font-size:18px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.panel{background:linear-gradient(145deg,#151b3d,#0d1025);border:1px solid #8b5cf6;border-radius:22px;padding:24px;box-shadow:0 0 28px #7c3aed33}
+.panel h2{margin:0 0 12px;font-size:22px}.muted{color:#b9bad0;line-height:1.55}
+.steps{display:flex;gap:10px;align-items:center;color:#c4b5fd;font-weight:900;margin-bottom:14px}
+.number{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#6d28d9}
+.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;border:0;border-radius:13px;padding:13px 18px;background:linear-gradient(90deg,#7c3aed,#c026d3);color:white;font-weight:900;text-decoration:none;cursor:pointer}
+.btn.secondary{background:#24284b;border:1px solid #555b8a}.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{padding:14px;border-radius:14px;background:#0a0e20;border:1px solid #39416c;margin:16px 0;color:#e5e7eb}
+.status.good{border-color:#16a34a;background:#052e24}.status.bad{border-color:#b45309;background:#35200b}
+.downloads{display:grid;gap:12px;margin-top:16px}.download{display:flex;justify-content:space-between;align-items:center;padding:15px;border-radius:14px;text-decoration:none;font-weight:900;border:1px solid #7c3aed;background:#1b1740}
+.download:nth-child(2){border-color:#22d3ee}.download:nth-child(3){border-color:#facc15}.download:nth-child(4){border-color:#c084fc}
+.hidden{display:none!important}.note{font-size:13px;color:#aaaec8;margin-top:20px}
+footer{text-align:center;padding:22px;color:#a6a6c0;border-top:1px solid #ffffff18}
+@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding:14px}.panel{padding:19px}}
+</style>
+</head>
+<body>
+<header><div class="brand">EASY <span>FIX</span></div><a class="toplink" href="https://youtube.com/@easy_fix" target="_blank" rel="noopener">▶ Subscribe to Channel</a></header>
+<main>
+<section class="hero">
+<div class="eyebrow">MINECRAFT DOWNLOAD CENTER</div>
+<h1>CHOOSE YOUR VERSION</h1>
+<p class="sub">Sign in with Google and verify your YouTube subscription to unlock the downloads.</p>
+</section>
+<section class="layout">
+<div class="panel">
+<div class="steps"><span class="number">1</span> ACCOUNT VERIFICATION</div>
+<h2>Verify your subscription</h2>
+<p class="muted">Sign in with the Google account you use on YouTube. We check your subscription through YouTube's official API. No screenshot is needed.</p>
+<a class="btn" href="/auth/google" id="login">Continue with Google</a>
+<button class="btn secondary hidden" id="check">Check subscription again</button>
+<div class="status" id="status">Not signed in yet.</div>
+<form action="/auth/logout" method="post" id="logout" class="hidden"><button class="btn secondary" type="submit">Sign out</button></form>
+</div>
+<div class="panel">
+<div class="steps"><span class="number">2</span> DOWNLOAD CENTER</div>
+<h2>Your Minecraft downloads</h2>
+<p class="muted">The four links appear here only after successful verification.</p>
+<div class="status" id="locked">🔒 Downloads are locked until your subscription is verified.</div>
+<div class="downloads hidden" id="downloads"></div>
+</div>
+</section>
+<p class="note">Privacy: the site requests read-only access to your YouTube subscriptions for this check. It does not need your Google password.</p>
+</main>
+<footer>Easy Fix · Minecraft Download Center</footer>
+<script>
+const statusBox=document.getElementById("status"), locked=document.getElementById("locked");
+const downloadsBox=document.getElementById("downloads");
+const login=document.getElementById("login"), check=document.getElementById("check"), logout=document.getElementById("logout");
+function message(text,kind=""){statusBox.textContent=text;statusBox.className="status "+kind}
+async function refresh(){
+ try{
+  const r=await fetch("/api/status"); const d=await r.json();
+  if(d.signedIn){login.classList.add("hidden");check.classList.remove("hidden");logout.classList.remove("hidden")}
+  if(d.setupNeeded){message(d.message,"bad");return}
+  if(d.verified){
+   message("✓ Subscription confirmed! Your downloads are unlocked.","good");
+   locked.classList.add("hidden");
+   const dl=await fetch("/api/downloads"); const data=await dl.json();
+   downloadsBox.innerHTML="";
+   data.downloads.forEach(item=>{
+    const a=document.createElement("a");a.className="download";a.href=item.url;a.target="_blank";a.rel="noopener";
+    a.textContent=item.title+"  ↓";downloadsBox.appendChild(a);
+   });
+   downloadsBox.classList.remove("hidden");
+  }else if(d.signedIn){message(d.error||"This Google account is not subscribed to Easy Fix yet.","bad")}
+ }catch(e){message("Could not check status. Please try again.","bad")}
+}
+check.addEventListener("click",refresh);refresh();
+const params=new URLSearchParams(location.search);
+if(params.has("error"))message("Google sign-in did not complete. Please try again.","bad");
+</script>
+</body>
+</html>
